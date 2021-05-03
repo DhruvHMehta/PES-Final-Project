@@ -8,7 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "Cmd_Processor.h"
+#include "Game.h"
 
 /* Macros and Type definitions */
 #define MAX_DUMP 640
@@ -26,28 +28,59 @@ command_handler_t handler;
 const char *help_string;
 } command_table_t;
 
-uint8_t cursor_pos[] = {8,1};
+uint8_t cursor_pos[] = {8,0};
+static uint8_t level = 1;
+
+typedef enum Direction{
+	UP = 0,
+	DOWN = 1,
+	LEFT = 2,
+	RIGHT = 3
+}Direction;
+
+static const bool object_map[2][429] =
+{
+	{	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,
+		0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,
+		0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,
+		1,1,1,1,1,0,0,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,1,1,1,0,0,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+		0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+
+	{	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,0,0,1,1,1,0,
+		1,1,1,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,1,0,0,1,0,1,0,1,0,
+		0,0,1,0,0,0,0,1,1,1,1,1,0,0,1,0,0,1,1,1,1,1,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,
+		0,0,1,0,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,1,1,1,
+		0,0,0,0,0,1,0,1,1,1,0,1,0,0,1,1,1,0,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,1,1,0,0,1,1,
+		0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,1,0,0,1,0,0,
+		0,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,
+		0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,
+		0,0,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,0,1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,1,1,1,1,0,
+		0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0}
+};
 
 /* Private Functions */
 void ParseCommand(char* input);
-static void handle_author(int argc, char *argv[]);
-static void handle_help(int argc, char* argv[]);
 static void handle_test(int argc, char* argv[]);
 static void handle_up(int argc, char* argv[]);
 static void handle_down(int argc, char* argv[]);
 static void handle_left(int argc, char* argv[]);
 static void handle_right(int argc, char* argv[]);
+static void handle_cursor(int argc, char* argv[]);
+static void handle_result(int argc, char* argv[]);
+static void handle_level_2(int argc, char* argv[]);
 
 /* Add commands here
  * Format : {"Command Name", &handler_fn, "Help string"}
  * */
 static const command_table_t commands[] = \
 		{
-			{"Author",	&handle_author, "Author\n\r\t" \
-										"Prints the name of the author\n\r"},
-
-			{"Help",	&handle_help,	"Help\n\r\t" \
-										"Prints this help message\n\r"},
 
 			{"Test",   	&handle_test, " ddd"},
 
@@ -57,7 +90,13 @@ static const command_table_t commands[] = \
 
 			{"Left",	&handle_left, "dd"},
 
-			{"Right",	&handle_right, "dd"}
+			{"Right",	&handle_right, "dd"},
+
+			{"Cursor",  &handle_cursor, "dd"},
+
+			{"Result",	&handle_result, "aa"},
+
+			{"Level_2",  &handle_level_2, "aad"}
 		};
 
 static const int num_commands =  sizeof(commands) / sizeof(command_table_t);
@@ -135,98 +174,33 @@ void ParseCommand(char* input)
 }
 
 
-void LineAccumalator()
+static uint8_t bump_detect(Direction dir)
 {
-	static char input[100];
-	static uint8_t i = 0;
-
-	/* If any byte is received, add to the buffer */
-	if(ByteReceived())
+	if(dir == UP)
 	{
-		input[i] = getchar();
-		i++;
-
-		/* Backspace handling */
-		if(input[i-1] == '\b')
-		{
-			i = i - 2;
-
-			/* To prevent backspace from eating the prompt */
-			if(i == 255)
-			{
-				printf(" ");
-				i++;
-			}
-
-			else printf(" \b");
-		}
-
-		/* On reception of enter, Process the command */
-		if(input[i-1] == '\r')
-		{
-			input[i] = '\0';
-			i++;
-
-			printf("\r\n");
-			ParseCommand(input);
-
-			i = 0;
-		}
-	}
-}
-
-/**
- * @name    handle_author.
- *
- * @brief   Handles the command - author, by printing my name.
- *
- * @param	int argc - Number of arguments passed
- * 			char* argv[] - Argument vectors
- *
- * @return  void
- *
- */
-static void handle_author(int argc, char* argv[])
-{
-	/* Author does not accept arguments */
-	if(argc > 1)
-	{
-		printf("Invalid command sequence for : %s\n\r", argv[0]);
-		return;
+		if(object_map[level-1][(cursor_pos[ROW] - 9)*39 + (cursor_pos[COL])])
+			return 0;
 	}
 
-	printf("Dhruv Mehta\n\r");
-}
-
-
-/**
- * @name    handle_help.
- *
- * @brief   Handles the command - help
- * 			Prints the help string for all commands
- *
- * @param	int argc - Number of arguments passed
- * 			char* argv[] - Argument vectors
- *
- * @return  void
- *
- */
-static void handle_help(int argc, char* argv[])
-{
-	/* Help does not accept arguments */
-	if(argc > 1)
+	else if(dir == DOWN)
 	{
-		printf("Invalid command sequence for : %s\n\r", argv[0]);
-		return;
+		if(object_map[level-1][(cursor_pos[ROW] - 7)*39 + (cursor_pos[COL])])
+			return 0;
 	}
 
-	printf("\n\rBreakfast Serial Command Processor\n\r");
-
-	/* Print out all help strings */
-	for(int i = 0; i < num_commands; i++)
+	else if(dir == LEFT)
 	{
-		printf("%s\n\r", commands[i].help_string);
+		if(object_map[level-1][(cursor_pos[ROW] - 8)*39 + (cursor_pos[COL] - 1)])
+			return 0;
 	}
+
+	else if(dir == RIGHT)
+	{
+		if(object_map[level-1][(cursor_pos[ROW] - 8)*39 + (cursor_pos[COL] + 1)])
+			return 0;
+	}
+
+	return 1;
 }
 
 static void handle_test(int argc, char* argv[])
@@ -237,28 +211,28 @@ static void handle_test(int argc, char* argv[])
 
 	printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\r");
 	printf("                         __   __   ___  _                                       \n\r");
-	printf("               |\\/|  /\\   /  |_     |  |_ |)  |\\/| | |\\|  /\\  |            \n\r");
-	printf("               |  | /  \\ /_  |__    |  |_ |\\  |  | | | | /  \\ |__            \n\r");
+	printf("               |\\/|  /\\   /  |_     |  |_ |) |\\/| | |\\|  /\\  |             \n\r");
+	printf("               |  | /  \\ /_  |__    |  |_ |\\ |  | | | | /  \\ |__             \n\r");
 	printf("                                                                                \n\r");
 	printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\r");
 	printf("_______________________________________                                         \n\r");
 	printf("                                       |                                        \n\r");
-	printf("                  _       |       _____|                                        \n\r");
-	printf("  |____________    |      |      |     |                                        \n\r");
-	printf("    |              |______|  __________|                                        \n\r");
-	printf("____|  |  ______   |         |         |                                        \n\r");
+	printf("                  _       |       _____|     Welcome to Maze Terminal!          \n\r");
+	printf("  |____________    |      |      |     |     Use your NXP Dev Board as          \n\r");
+	printf("    |              |______|  __________|     a controller, USB facing           \n\r");
+	printf("____|  |  ______                       |     the user.                          \n\r");
 	printf("       |_|  |   |_________________|____|                                        \n\r");
-	printf("    |       |               |                                                   \n\r");
-	printf("    |_______|        ___    |          |                                        \n\r");
+	printf("    |       |               |                Hold the board horizontally and    \n\r");
+	printf("    |_______|        ___    |          |     tap the touch sensor to start      \n\r");
 	printf("            |_____  |                  |                                        \n\r");
-	printf("  |_________|   _   |   |____________  |                                        \n\r");
-	printf("               |    |                | |                                        \n\r");
-	printf("_______________|____|________________|_|                                        \n\r\e[8;1H");
+	printf("  |_________|       |   |____________  |     Pitch up/down to move up/down      \n\r");
+	printf("               |    |                | |     Roll left/right to move left/right \n\r");
+	printf("_______________|____|________________|_|     Touching the maze walls ends game  \n\r\e[8;1H\e[?25l");
 }
 
 static void handle_up(int argc, char* argv[])
 {
-	if(cursor_pos[ROW] != 8)
+	if(cursor_pos[ROW] != 8 && bump_detect(UP))
 	{
 		printf("\b \b\e[A*");
 		cursor_pos[ROW] -= 1;
@@ -272,7 +246,7 @@ static void handle_up(int argc, char* argv[])
 
 static void handle_down(int argc, char* argv[])
 {
-	if(cursor_pos[ROW] != 23)
+	if(cursor_pos[ROW] != 18 && bump_detect(DOWN))
 	{
 		printf("\b \b\eD*");
 		cursor_pos[ROW] += 1;
@@ -283,7 +257,7 @@ static void handle_down(int argc, char* argv[])
 
 static void handle_left(int argc, char* argv[])
 {
-	if(cursor_pos[COL] != 0)
+	if(cursor_pos[COL] != 0 && bump_detect(LEFT))
 	{
 		printf("\b \b\e6*");
 		cursor_pos[COL] -= 1;
@@ -294,10 +268,62 @@ static void handle_left(int argc, char* argv[])
 
 static void handle_right(int argc, char* argv[])
 {
-	if(cursor_pos[COL] != 78)
+	if(cursor_pos[COL] != 38 && bump_detect(RIGHT))
 	{
 		printf("\b \b\e9*");
 		cursor_pos[COL] += 1;
 	}
+}
+
+static void handle_cursor(int argc, char* argv[])
+{
+	if((cursor_pos[ROW] == 14) && (cursor_pos[COL] == 38))
+		Set_Result();
+}
+
+static void handle_result(int argc, char* argv[])
+{
+	printf("\e[21;30H Level Complete!");
+
+	if(level == 1)
+    printf("\e[22;28H Tap to go to Level 2");
+
+	else
+	{
+		printf("\e[22;18H You win! Please press the reset button to start over");
+		while(1);
+	}
+
+	cursor_pos[ROW] = 8;
+	cursor_pos[COL] = 0;
+}
+
+static void handle_level_2(int argc, char* argv[])
+{
+	/* Color red, scroll to fill screen,
+	 * move cursor to 1,1 */
+	printf("\e[41m\n\r\e[2J\n\r\e[1;1H");
+
+	printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\r");
+	printf("                         __   __   ___  _                                       \n\r");
+	printf("               |\\/|  /\\   /  |_     |  |_ |) |\\/| | |\\|  /\\  |             \n\r");
+	printf("               |  | /  \\ /_  |__    |  |_ |\\ |  | | | | /  \\ |__             \n\r");
+	printf("                                                                                \n\r");
+	printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\r");
+	printf("_______________________________________                                         \n\r");
+	printf("                                       |                                        \n\r");
+	printf("      ______|==  ===========   ==  === |     Welcome to Maze Terminal!          \n\r");
+	printf("____ |        |       ______| |  | | | |                                        \n\r");
+	printf("  |    |====  |  ____|   ___  |__      |             Level 2!                   \n\r");
+	printf("  | _  |    __  |       |   |    |  ___|                                        \n\r");
+	printf("     | |__ |  |_| ______|   |    |_  __|                                        \n\r");
+	printf("  |  |         __           |___ |  |                                           \n\r");
+	printf("  |__|  ______|  |______|____________| |                                        \n\r");
+	printf("  |    |      |_        |  ______      |                                        \n\r");
+	printf("  | ___|         | _____| |       ___| |                                        \n\r");
+	printf("  |      |_______|              | |    |                                        \n\r");
+	printf("____|_|__|__|__|__|__|__|_|______|_____|                                        \n\r\e[8;1H\e[?25l");
+
+	level = 2;
 }
 

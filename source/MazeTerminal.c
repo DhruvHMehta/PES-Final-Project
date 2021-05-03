@@ -38,9 +38,8 @@
 #include "I2C.h"
 #include "UART.h"
 #include "MMA8451.h"
-/* TODO: insert other include files here. */
+#include "TSI_functions.h"
 
-/* TODO: insert other definitions and declarations here. */
 
 /*
  * @brief   Application entry point.
@@ -51,17 +50,11 @@ int main(void) {
 	uart_init();
 	I2C_Init();
 	Accel_Init();
+	Init_TouchConfig();
 
-	printf("successfully started\r\n? ");
+	printf("successfully started\r\n");
 
 	RunGame();
-	/*
-	while(1)
-	{
-		//for(uint32_t i = 0; i < 100000; i++);
-		read_full_xyz();
-		convert_xyz_to_roll_pitch();
-	}
-*/
+
     return 0 ;
 }

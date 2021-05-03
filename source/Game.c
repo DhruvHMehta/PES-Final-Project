@@ -6,6 +6,22 @@
  */
 #include "MMA8451.h"
 #include "Cmd_Processor.h"
+#include "TSI_Functions.h"
+
+#define DELAY_TIME(x) ((50 - x) * 10)
+
+uint8_t resultflag = 0;
+
+typedef enum state
+{
+	STARTUP = 0,
+	PLAYING = 1,
+	RESULT = 2,
+	CH_LEVEL = 3
+
+}state;
+
+state curstate = STARTUP;
 
 void Delay(long int millis)
 {
@@ -19,105 +35,94 @@ void Delay(long int millis)
 	}
 }
 
+void Set_Result()
+{
+	resultflag = 1;
+}
+
+void Check_and_Move(AngleData rpstruct)
+{
+	if(rpstruct.roll > 10)
+	{
+		ParseCommand("Left\0");
+		Delay(DELAY_TIME(rpstruct.roll));
+	}
+
+
+	if(rpstruct.roll < -10)
+	{
+		ParseCommand("Right\0");
+		Delay(DELAY_TIME(rpstruct.roll*-1));
+	}
+
+
+	if(rpstruct.pitch < -10)
+	{
+		ParseCommand("Up\0");
+		Delay(DELAY_TIME(rpstruct.pitch*-1));
+	}
+
+
+	if(rpstruct.pitch > 10)
+	{
+		ParseCommand("Down\0");
+		Delay(DELAY_TIME(rpstruct.pitch));
+	}
+
+	ParseCommand("Cursor\0");
+
+	if(resultflag == 1)
+		curstate = RESULT;
+
+	resultflag = 0;
+}
+
 void RunGame()
 {
 	AngleData rpstruct;
-	ParseCommand("Test\0");
-	printf("*");
 
 	while(1)
 	{
 		read_full_xyz();
 		rpstruct = convert_xyz_to_roll_pitch();
-		LineAccumalator();
 
-		if(rpstruct.roll > 40)
+		switch(curstate)
 		{
-			ParseCommand("Left\0");
-			Delay(50);
-		}
-		else if(rpstruct.roll > 30)
-		{
-			ParseCommand("Left\0");
-			Delay(100);
-		}
-		else if(rpstruct.roll > 20)
-		{
-			ParseCommand("Left\0");
-			Delay(200);
-		}
-		else if(rpstruct.roll > 10)
-		{
-			ParseCommand("Left\0");
-			Delay(350);
-		}
+		case STARTUP:
+			ParseCommand("Test\0");
+
+			while(!(Touch_Scan_LH()))
+			{
+				Delay(30);
+			}
+
+			printf("*");
+			curstate = PLAYING;
+			break;
 
 
-		if(rpstruct.roll < -40)
-		{
-			ParseCommand("Right\0");
-			Delay(50);
-		}
-		else if(rpstruct.roll < -30)
-		{
-			ParseCommand("Right\0");
-			Delay(100);
-		}
-		else if(rpstruct.roll < -20)
-		{
-			ParseCommand("Right\0");
-			Delay(200);
-		}
-		else if(rpstruct.roll < -10)
-		{
-			ParseCommand("Right\0");
-			Delay(350);
+		case PLAYING:
+			Check_and_Move(rpstruct);
+			break;
+
+		case RESULT:
+			ParseCommand("Result\0");
+
+			while(!(Touch_Scan_LH()))
+			{
+				Delay(30);
+			}
+
+			curstate = CH_LEVEL;
+			break;
+
+		case CH_LEVEL:
+			ParseCommand("Level_2\0");
+			curstate = PLAYING;
+			break;
+
 		}
 
-
-		if(rpstruct.pitch < -40)
-		{
-			ParseCommand("Up\0");
-			Delay(50);
-		}
-
-		else if(rpstruct.pitch < -30)
-		{
-			ParseCommand("Up\0\0");
-			Delay(100);
-		}
-		else if(rpstruct.pitch < -20)
-		{
-			ParseCommand("Up\0\0");
-			Delay(200);
-		}
-		else if(rpstruct.pitch < -10)
-		{
-			ParseCommand("Up\0\0");
-			Delay(350);
-		}
-
-		if(rpstruct.pitch > 40)
-		{
-			ParseCommand("Down\0");
-			Delay(50);
-		}
-
-		else if(rpstruct.pitch > 30)
-		{
-			ParseCommand("Down\0");
-			Delay(100);
-		}
-		else if(rpstruct.pitch > 20)
-		{
-			ParseCommand("Down\0");
-			Delay(200);
-		}
-		else if(rpstruct.pitch > 10)
-		{
-			ParseCommand("Down\0");
-			Delay(350);
-		}
 	}
 
 }

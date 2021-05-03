@@ -35,7 +35,6 @@
 /* Choose between 1 and 2 stop bits */
 #define STOP_BITS	2
 
-Buffer Cbfifo_RX = {.size = SIZE};
 Buffer Cbfifo_TX = {.size = SIZE};
 
 /* Function Definitions */
@@ -119,50 +118,12 @@ int __sys_write(int handle, char *buf, int size)
 	return -1;
 }
 
-int __sys_readc(void)
-{
-	uint8_t UART_buf;
-
-	/* Dequeue a byte if available, else return -1 */
-	if(cbfifo_dequeue(&Cbfifo_RX, &UART_buf, 1))
-	{
-		return UART_buf;
-	}
-	return -1;
-}
-
-uint8_t ByteReceived()
-{
-	if(cbfifo_length(&Cbfifo_RX))
-		return 1;
-
-	return 0;
-}
-
 
 void UART0_IRQHandler()
 {
 	/* Byte to store data and error counter for debugging */
 	uint8_t byte;
 	static uint16_t errorctr = 0;
-
-	if(UART0->S1 & UART0_S1_RDRF_MASK)
-	{
-		byte = UART0->D;
-
-		/* Enqueue the received byte onto RX buffer
-		 * Increment error count if buffer is full
-		 */
-		if(cbfifo_enqueue(&Cbfifo_RX, &byte, 1) < 1)
-		errorctr++;
-
-		/* Enqueue the received byte onto TX buffer (loopback)
-		* Increment error count if buffer is full
-		*/
-		if(cbfifo_enqueue(&Cbfifo_TX, &byte, 1) < 1)
-		errorctr++;
-	}
-
 
 	if(UART0->S1 & UART0_S1_TDRE_MASK)
 	{

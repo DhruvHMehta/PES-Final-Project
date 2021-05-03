@@ -25,9 +25,7 @@ int i2c_lock=0;
 #define I2C_BUSY	while(I2C0->S & I2C_S_BUSY_MASK)
 #define I2C_TCF		while(!(I2C0->S & I2C_S_BUSY_MASK))
 #define I2C_WAIT	i2c_wait()
-/*while((I2C0->S & I2C_S_IICIF_MASK) == 0){} \
-					I2C0->S |= I2C_S_IICIF_MASK;
-*/
+
 void I2C_Init()
 {
 	//clock i2c peripheral and port E
@@ -209,7 +207,6 @@ void i2c_busy(void){
 	i2c_lock=1;
 }
 
-#pragma no_inline
 void i2c_wait(void) {
 	lock_detect = 0;
 	while(((I2C0->S & I2C_S_IICIF_MASK)==0) & (lock_detect < 200)) {
@@ -220,6 +217,18 @@ void i2c_wait(void) {
 	I2C0->S |= I2C_S_IICIF_MASK;
 }
 
+/* Can remove, unused
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *  */
 uint8_t i2c_repeated_read(uint8_t isLastRead)
 {
 	uint8_t data;
