@@ -8,6 +8,19 @@
 #include "MMA8451.h"
 #include "I2C.h"
 
+#define SLAVE_ADDR		0x1D
+#define MMA_ADDR		(SLAVE_ADDR << 1)
+#define REG_CTRL1 		0x2A
+#define WHOAMI			0x0D
+#define XYZ_DATA_CFG	0x0E
+
+#define REG_OUT_X_MSB	0x01
+#define REG_OUT_X_LSB	0x02
+#define REG_OUT_Y_MSB	0x03
+#define REG_OUT_Y_LSB	0x04
+#define REG_OUT_Z_MSB	0x05
+#define REG_OUT_Z_LSB	0x06
+
 #define COUNTS_PER_G (4096.0)
 #define M_PI (3.14159265)
 
@@ -34,16 +47,7 @@ void read_full_xyz()
 	data[4] = I2C_Read_Byte(MMA_ADDR, REG_OUT_Z_MSB);
 	data[5] = I2C_Read_Byte(MMA_ADDR, REG_OUT_Z_LSB);
 
-	/*	i2c_read_setup(MMA_ADDR , REG_X1);
 
-		// Read five bytes in repeated mode
-		for( i=0; i<5; i++)	{
-			for(uint32_t i = 0; i < 100000; i++);
-			data[i] = i2c_repeated_read(0);
-		}
-		// Read last byte ending repeated mode
-		data[i] = i2c_repeated_read(1);
- */
 	for (i = 0; i < 3; i++)
 	{
 		temp[i] = 0;

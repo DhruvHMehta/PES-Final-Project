@@ -19,7 +19,7 @@
 /* Macros for Location of Touch */
 #define MIN_LEFT	100
 
-void Init_TouchConfig()
+void TouchConfig_Init()
 {
 	/* Enabling the clock */
 	SIM->SCGC5 |= SIM_SCGC5_TSI_MASK;

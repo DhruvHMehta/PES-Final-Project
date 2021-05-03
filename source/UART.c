@@ -39,7 +39,7 @@ Buffer Cbfifo_TX = {.size = SIZE};
 
 /* Function Definitions */
 
-void uart_init()
+void Uart_Init()
 {
 
 	/* Variables to calculate and write Baud rate value */
@@ -95,14 +95,9 @@ void uart_init()
 	/* Enable Interrupts for Transmit and Receive */
 	UART0->C2 |= (UART0_C2_TIE(1) | UART0_C2_RIE(1));
 
-	#ifndef DEBUG
-	  Buffer Cbfifo_Test = {.wrloc = 0, .rdloc = 0, .size = SIZE};
-	  test_cbfifo(&Cbfifo_Test);
-	#endif
-
 }
 
-
+/* To redirect printf output to UART */
 int __sys_write(int handle, char *buf, int size)
 {
 	/* Ignore the handle argument */
@@ -118,12 +113,11 @@ int __sys_write(int handle, char *buf, int size)
 	return -1;
 }
 
-
+/* Send data to the UART output */
 void UART0_IRQHandler()
 {
 	/* Byte to store data and error counter for debugging */
 	uint8_t byte;
-	static uint16_t errorctr = 0;
 
 	if(UART0->S1 & UART0_S1_TDRE_MASK)
 	{

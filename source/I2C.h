@@ -8,6 +8,8 @@
 #ifndef I2C_H_
 #define I2C_H_
 
+#include <stdint.h>
+
 void I2C_Init();
 void I2C_Start();
 void I2C_Write_Byte(uint8_t Addr, uint8_t RegAddr, uint8_t Data);

@@ -9,6 +9,7 @@
 #define _CBFIFO_H_
 
 #include <stdlib.h>  // for size_t
+#include <stdint.h>
 
 #define SIZE (256)                          /* Size of Buffer */
 

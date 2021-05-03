@@ -1,60 +1,51 @@
 /*
- * Copyright 2016-2021 NXP
- * All rights reserved.
+ * main.c
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
+ *  Created on: Apr 27, 2021
+ *      Author: Dhruv
+ *      Brief : Application entry point to a terminal-based Maze game
+ *      		which uses the on board accelerometer (MMA8451) to
+ *      		control the movements in the maze. Consists of two
+ *      		levels to play. Just plug in your board, follow the
+ *      		instructions and play!
  *
- * o Redistributions of source code must retain the above copyright notice, this list
- *   of conditions and the following disclaimer.
+ *      		(Requires a terminal emulator on PC with the settings:
+ *      		Baud rate - 38400, 8 data bits, 1 stop bit, no parity)
  *
- * o Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimer in the documentation and/or
- *   other materials provided with the distribution.
- *
- * o Neither the name of NXP Semiconductor, Inc. nor the names of its
- *   contributors may be used to endorse or promote products derived from this
- *   software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/**
- * @file    MazeTerminal.c
- * @brief   Application entry point.
- */
-#include <stdio.h>
-#include <stdint.h>
+#include "assert.h"
 #include "sysclock.h"
 #include "I2C.h"
 #include "UART.h"
 #include "MMA8451.h"
 #include "TSI_functions.h"
-
+#include "Game.h"
+#include "SysTick_Functions.h"
+#include "Testsuite.h"
 
 /*
  * @brief   Application entry point.
+ * 			Initialize peripherals and hand over control to
+ * 			the game.
  */
-int main(void) {
+int main()
+{
 
-	sysclock_init();
-	uart_init();
+	/* Initialize all peripherals */
+	SysClock_Init();
+	Uart_Init();
 	I2C_Init();
 	Accel_Init();
-	Init_TouchConfig();
+	TouchConfig_Init();
+	Ticktime_Init();
 
-	printf("successfully started\r\n");
+	/* Run uCUnit Test Suite */
+	Testsuite_Run();
 
+	/* Run the game */
 	RunGame();
 
+	/* Should never reach here */
+	assert(0);
     return 0 ;
 }

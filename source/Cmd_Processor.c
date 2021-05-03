@@ -67,14 +67,15 @@ static const bool object_map[2][429] =
 
 /* Private Functions */
 void ParseCommand(char* input);
-static void handle_test(int argc, char* argv[]);
+static void handle_level_1(int argc, char* argv[]);
+static void handle_level_2(int argc, char* argv[]);
 static void handle_up(int argc, char* argv[]);
 static void handle_down(int argc, char* argv[]);
 static void handle_left(int argc, char* argv[]);
 static void handle_right(int argc, char* argv[]);
 static void handle_cursor(int argc, char* argv[]);
 static void handle_result(int argc, char* argv[]);
-static void handle_level_2(int argc, char* argv[]);
+
 
 /* Add commands here
  * Format : {"Command Name", &handler_fn, "Help string"}
@@ -82,7 +83,9 @@ static void handle_level_2(int argc, char* argv[]);
 static const command_table_t commands[] = \
 		{
 
-			{"Test",   	&handle_test, " ddd"},
+			{"Level_1", &handle_level_1, " ddd"},
+
+			{"Level_2", &handle_level_2, "aad"},
 
 			{"Up",	   	&handle_up, "dd"},
 
@@ -94,9 +97,8 @@ static const command_table_t commands[] = \
 
 			{"Cursor",  &handle_cursor, "dd"},
 
-			{"Result",	&handle_result, "aa"},
+			{"Result",	&handle_result, "aa"}
 
-			{"Level_2",  &handle_level_2, "aad"}
 		};
 
 static const int num_commands =  sizeof(commands) / sizeof(command_table_t);
@@ -119,13 +121,16 @@ void ParseCommand(char* input)
 	  char *p = input;
 	  char *end;
 
+	  if(p == NULL)
+		  return;
+
 	  // find end of string
 	  for (end = input; *end != '\0'; end++)
 	    ;
 
 	  /* Tokenize input in place */
 
-	  char *argv[10];
+	  char *argv[2];
 	  uint8_t valid_cmd = 0;
 	  int argc = 0;
 	  memset(argv, 0, sizeof(argv));
@@ -142,7 +147,6 @@ void ParseCommand(char* input)
 	      {
 	        p++;
 	      }
-	      //*p = '\0';
 	    }
 	  }
 
@@ -150,7 +154,6 @@ void ParseCommand(char* input)
 	  if (argc == 0)
 	  {
 		  // no command
-		  //printf("? ");
 		  return;
 	  }
 
@@ -170,7 +173,6 @@ void ParseCommand(char* input)
 	  if(!valid_cmd)
 		  printf("Unknown command : %s\n\r", argv[0]);
 
-	  //printf("? ");
 }
 
 
@@ -203,12 +205,13 @@ static uint8_t bump_detect(Direction dir)
 	return 1;
 }
 
-static void handle_test(int argc, char* argv[])
+static void handle_level_1(int argc, char* argv[])
 {
 	/* Color blue, scroll to fill screen, resize window
 	 * move cursor to 1,1 */
 	printf("\e[44m\n\r\e[2J\n\r\e[8;24;80t\n\r\e[1;1H");
 
+	/* Print out the UI, maze and instruction. Move cursor to the start and stop cursor blink */
 	printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\r");
 	printf("                         __   __   ___  _                                       \n\r");
 	printf("               |\\/|  /\\   /  |_     |  |_ |) |\\/| | |\\|  /\\  |             \n\r");
@@ -227,75 +230,7 @@ static void handle_test(int argc, char* argv[])
 	printf("            |_____  |                  |                                        \n\r");
 	printf("  |_________|       |   |____________  |     Pitch up/down to move up/down      \n\r");
 	printf("               |    |                | |     Roll left/right to move left/right \n\r");
-	printf("_______________|____|________________|_|     Touching the maze walls ends game  \n\r\e[8;1H\e[?25l");
-}
-
-static void handle_up(int argc, char* argv[])
-{
-	if(cursor_pos[ROW] != 8 && bump_detect(UP))
-	{
-		printf("\b \b\e[A*");
-		cursor_pos[ROW] -= 1;
-	}
-
-	//printf("\e[7A");
-	//printf("\e[6C");
-	//printf("*");
-}
-
-
-static void handle_down(int argc, char* argv[])
-{
-	if(cursor_pos[ROW] != 18 && bump_detect(DOWN))
-	{
-		printf("\b \b\eD*");
-		cursor_pos[ROW] += 1;
-	}
-
-}
-
-
-static void handle_left(int argc, char* argv[])
-{
-	if(cursor_pos[COL] != 0 && bump_detect(LEFT))
-	{
-		printf("\b \b\e6*");
-		cursor_pos[COL] -= 1;
-	}
-
-}
-
-
-static void handle_right(int argc, char* argv[])
-{
-	if(cursor_pos[COL] != 38 && bump_detect(RIGHT))
-	{
-		printf("\b \b\e9*");
-		cursor_pos[COL] += 1;
-	}
-}
-
-static void handle_cursor(int argc, char* argv[])
-{
-	if((cursor_pos[ROW] == 14) && (cursor_pos[COL] == 38))
-		Set_Result();
-}
-
-static void handle_result(int argc, char* argv[])
-{
-	printf("\e[21;30H Level Complete!");
-
-	if(level == 1)
-    printf("\e[22;28H Tap to go to Level 2");
-
-	else
-	{
-		printf("\e[22;18H You win! Please press the reset button to start over");
-		while(1);
-	}
-
-	cursor_pos[ROW] = 8;
-	cursor_pos[COL] = 0;
+	printf("_______________|____|________________|_|     To win -> Reach opening of maze    \n\r\e[8;1H\e[?25l");
 }
 
 static void handle_level_2(int argc, char* argv[])
@@ -304,6 +239,7 @@ static void handle_level_2(int argc, char* argv[])
 	 * move cursor to 1,1 */
 	printf("\e[41m\n\r\e[2J\n\r\e[1;1H");
 
+	/* Print out the UI, maze and instruction. Move cursor to the start and stop cursor blink */
 	printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\r");
 	printf("                         __   __   ___  _                                       \n\r");
 	printf("               |\\/|  /\\   /  |_     |  |_ |) |\\/| | |\\|  /\\  |             \n\r");
@@ -326,4 +262,80 @@ static void handle_level_2(int argc, char* argv[])
 
 	level = 2;
 }
+
+static void handle_up(int argc, char* argv[])
+{
+	/* Check for boundary walls and obstacles */
+	if(cursor_pos[ROW] != 8 && bump_detect(UP))
+	{
+		/* Erase old position, move up, write * */
+		printf("\b \b\e[A*");
+		cursor_pos[ROW] -= 1;
+	}
+
+}
+
+
+static void handle_down(int argc, char* argv[])
+{
+	/* Check for boundary walls and obstacles */
+	if(cursor_pos[ROW] != 18 && bump_detect(DOWN))
+	{
+		/* Erase old position, move down, write * */
+		printf("\b \b\eD*");
+		cursor_pos[ROW] += 1;
+	}
+
+}
+
+
+static void handle_left(int argc, char* argv[])
+{
+	/* Check for boundary walls and obstacles */
+	if(cursor_pos[COL] != 0 && bump_detect(LEFT))
+	{
+		/* Erase old position, move left, write * */
+		printf("\b \b\e6*");
+		cursor_pos[COL] -= 1;
+	}
+
+}
+
+
+static void handle_right(int argc, char* argv[])
+{
+	/* Check for boundary walls and obstacles */
+	if(cursor_pos[COL] != 38 && bump_detect(RIGHT))
+	{
+		/* Erase old position, move up, write * */
+		printf("\b \b\e9*");
+		cursor_pos[COL] += 1;
+	}
+}
+
+static void handle_cursor(int argc, char* argv[])
+{
+	/* Check for boundary walls and obstacles */
+	if((cursor_pos[ROW] == 14) && (cursor_pos[COL] == 38))
+		Set_Result();
+}
+
+static void handle_result(int argc, char* argv[])
+{
+	printf("\e[21;30H Level Complete!");
+
+	if(level == 1)
+    printf("\e[22;28H Tap to go to Level 2");
+
+	else
+	{
+		/* Hang here, game has ended */
+		printf("\e[22;18H You win! Please press the reset button to start over");
+		while(1);
+	}
+
+	cursor_pos[ROW] = 8;
+	cursor_pos[COL] = 0;
+}
+
 

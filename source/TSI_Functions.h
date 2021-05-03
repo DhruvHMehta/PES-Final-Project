@@ -25,7 +25,7 @@
  * @return  void
  *
  */
-void Init_TouchConfig();
+void TouchConfig_Init();
 
 /**
  * @name    Touch_Scan_LH.

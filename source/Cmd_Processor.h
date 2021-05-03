@@ -13,18 +13,6 @@
 
 /* Function Prototypes */
 
-/**
- * @name    LineAccumalator.
- *
- * @brief   Accumulates the user input into a buffer until
- * 			a carriage return is received. Handles backspace.
- *
- * @param	void
- *
- * @return  void
- *
- */
-void LineAccumalator();
 void ParseCommand(char* input);
 
 #endif /* CMD_PROCESSOR_H_ */

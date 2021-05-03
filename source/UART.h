@@ -23,7 +23,7 @@
  * @return  void
  *
  */
-void uart_init();
+void Uart_Init();
 
 /**
  * @name    __sys_write.
@@ -43,35 +43,5 @@ void uart_init();
  */
 int __sys_write(int handle, char *buf, int size);
 
-/**
- * @name    __sys_read.
- *
- * @brief   Redirects scanf, gets, getchar through the
- * 			UART peripheral.
- *
- * @param	none
- *
- * @return  int - 0/-1 (Success/Failure)
- *
- * @Note 	: Do not explicitly call this function.
- * 			  Use scanf/gets/getchar instead.
- *
- */
-int __sys_readc(void);
-
-/**
- * @name    ByteReceived.
- *
- * @brief   Interface to the command processor to
- * 			check whether a byte is received from
- * 			the user.
- *
- * @param	none
- *
- * @return  int - 1/0 (Byte received/ No data received)
- *
- *
- */
-uint8_t ByteReceived();
 
 #endif /* UART_H_ */

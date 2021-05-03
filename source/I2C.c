@@ -3,6 +3,9 @@
  *
  *  Created on: Apr 27, 2021
  *      Author: Dhruv
+ *      Brief : Contains I2C Drivers used for interface
+ *      		with the MMA8451 accelerometer.
+ *      Reference : https://github.com/alexander-g-dean/ESF/blob/master/NXP/Code/Chapter_8/I2C-Demo/src/i2c.c
  */
 #include <stdint.h>
 #include "MKL25Z4.h"
@@ -216,55 +219,3 @@ void i2c_wait(void) {
 		i2c_busy();
 	I2C0->S |= I2C_S_IICIF_MASK;
 }
-
-/* Can remove, unused
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *  */
-uint8_t i2c_repeated_read(uint8_t isLastRead)
-{
-	uint8_t data;
-
-	lock_detect = 0;
-
-	if(isLastRead)	{
-		I2C_NACK;								/*set NACK after read	*/
-	} else	{
-		I2C_ACK;								/*ACK after read	*/
-	}
-
-	data = I2C0->D;				/*dummy read	*/
-	I2C_WAIT;							/*wait for completion */
-
-	if(isLastRead)	{
-		I2C_STOP;					/*send stop	*/
-	}
-	data = I2C0->D;				/*read data	*/
-
-	return  data;
-}
-
-void i2c_read_setup(uint8_t dev, uint8_t address)
-{
-	I2C0->D = dev;			  /*send dev address	*/
-	I2C_WAIT;							/*wait for completion */
-
-	I2C0->D =  address;		/*send read address	*/
-	I2C_WAIT;							/*wait for completion */
-
-	I2C_RSTA;				   /*repeated start */
-	I2C0->D = (dev|0x1);	 /*send dev address (read)	*/
-	I2C_WAIT;							 /*wait for completion */
-
-	I2C_RX;						   /*set to receive mode */
-
-}
-
