@@ -11,7 +11,7 @@
 
 ## Description
 Contains an MCUXpresso Project for a Terminal-based Maze game. Requires the user to use the KL25Z4 on-board accelerometer to guide a cursor across two levels of the game.
-To play, simply build the project as described in the build section and open a terminal emulator program (TeraTerm preferred). Instructions are displayed in the game. 
+To play, simply build the project as described in the build section and open a terminal emulator program ([TeraTerm](https://ttssh2.osdn.jp/index.html.en) works, the in-built terminal will not). Instructions are displayed in the game. 
 Please refer to the [Extra](https://github.com/DhruvHMehta/PES-Final-Project/blob/main/Extra) section for the testing strategy and screenshots.
 
 *Serial Settings - 38400 baud, 8 data bits, 2 stop bits, no parity.
