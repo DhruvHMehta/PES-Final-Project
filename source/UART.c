@@ -3,6 +3,9 @@
  *
  *  Created on: Mar 28, 2021
  *      Author: Dhruv
+ *      Brief : Contains UART initialization and IRQ Handler
+ *      		Also overrides __sys_write to redirect print
+ *      		to the terminal.
  */
 
 #include "MKL25Z4.h"

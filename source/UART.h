@@ -13,7 +13,7 @@
 /* Function Prototypes */
 
 /**
- * @name    uart_init.
+ * @name    Uart_Init.
  *
  * @brief   Initializes the UART0 peripheral with settings as
  * 			chosen in the UART Parameters macros.

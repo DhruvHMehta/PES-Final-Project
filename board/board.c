@@ -39,7 +39,7 @@
 #include "board.h"
 
 #if BOARD_FLASH_SIZE == 0
-#warning "BOARD_FLASH_SIZE not set; using 0 as default value"
+//#warning "BOARD_FLASH_SIZE not set; using 0 as default value"
 #endif
 
 /**

@@ -3,6 +3,7 @@
  *
  *  Created on: Apr 29, 2021
  *      Author: Dhruv
+ *      Brief : Contains the game state machine.
  */
 #include <stdio.h>
 #include "MMA8451.h"
@@ -10,10 +11,17 @@
 #include "TSI_Functions.h"
 #include "SysTick_Functions.h"
 
+/* Macros and Tpye definitions */
+
+/* Delay in 50ms chunks
+ * 0 < x < 45
+ */
 #define DELAY_TIME(x) ((50 - x) * 20)
 
+/* Flag to print results */
 uint8_t resultflag = 0;
 
+/* Game states */
 typedef enum state
 {
 	STARTUP = 0,
@@ -24,24 +32,46 @@ typedef enum state
 }state;
 state curstate = STARTUP;
 
+/* Private function definitions */
 
-void Set_Result()
-{
-	resultflag = 1;
-}
-
+/**
+ * @name    Startup_State.
+ *
+ * @brief   Starts the first level of the game
+ * 			and waits for user touch.
+ *
+ * @param	void
+ *
+ * @return  void
+ *
+ */
 static void Startup_State()
 {
+	/* Start first level */
 	ParseCommand("Level_1");
 
+	/* Wait for user touch */
 	while(!(Touch_Scan_LH()))
 	{
 		delay(30);
 	}
 
+	/* Game cursor */
 	printf("*");
 }
 
+/**
+ * @name    Check_and_Move.
+ *
+ * @brief   Checks the roll, pitch angles
+ * 			and determines the speed of
+ * 			movement and moves the cursor.
+ *
+ * @param	AngleData rpstruct - Roll/Pitch structure
+ *
+ * @return  void
+ *
+ */
 static void Check_and_Move(AngleData rpstruct)
 {
 	if(rpstruct.roll > 10)
@@ -71,24 +101,46 @@ static void Check_and_Move(AngleData rpstruct)
 		delay(DELAY_TIME(rpstruct.pitch));
 	}
 
+	/* Checks if the cursor has reached the end */
 	ParseCommand("Cursor");
 
+	/* Change state to RESULT */
 	if(resultflag == 1)
 		curstate = RESULT;
 
 	resultflag = 0;
 }
 
+/**
+ * @name    Result_State.
+ *
+ * @brief   Prints the result and waits for
+ * 			the user input to touch the sensor.
+ *
+ * @param	void
+ *
+ * @return  void
+ *
+ */
+
 static void Result_State()
 {
+	/* Print the result */
 	ParseCommand("Result");
 
+	/* Wait for user touch to advance */
 	while(!(Touch_Scan_LH()))
 	{
 		delay(30);
 	}
 }
 
+/* Function Definitions */
+
+void Set_Result()
+{
+	resultflag = 1;
+}
 
 void RunGame()
 {

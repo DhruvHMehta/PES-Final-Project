@@ -10,7 +10,7 @@
  *      		instructions and play!
  *
  *      		(Requires a terminal emulator on PC with the settings:
- *      		Baud rate - 38400, 8 data bits, 1 stop bit, no parity)
+ *      		Baud rate - 38400, 8 data bits, 2 stop bits, no parity)
  *
  */
 #include "assert.h"

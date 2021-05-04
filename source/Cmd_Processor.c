@@ -3,6 +3,9 @@
  *
  *  Created on: Mar 29, 2021
  *      Author: Dhruv
+ *      Brief : File contains handlers which process the given
+ *      		command and takes action based on the command
+ *      		as per the command table handlers.
  */
 
 #include <stdio.h>
@@ -13,11 +16,17 @@
 #include "Game.h"
 
 /* Macros and Type definitions */
-#define MAX_DUMP 640
-#define MIN(x,y) (x < y ? (x) : (y))
-
 #define ROW	0
 #define COL	1
+#define CUR_ROW_INIT 8
+#define CUR_COL_INIT 0
+#define CUR_MAX_LEFT 0
+#define CUR_MAX_RGHT 38
+#define CUR_MAX_UP	 8
+#define CUR_MAX_DOWN 18
+#define CUR_ROW_WIN	 14
+#define CUR_COL_WIN  38
+#define	OBS_MAP_COL	 39
 
 /* Function pointer type */
 typedef void (*command_handler_t)(int argc, char *argv[]);
@@ -25,12 +34,9 @@ typedef void (*command_handler_t)(int argc, char *argv[]);
 typedef struct{
 const char *name;
 command_handler_t handler;
-const char *help_string;
 } command_table_t;
 
-uint8_t cursor_pos[] = {8,0};
-static uint8_t level = 1;
-
+/* Game movement directions */
 typedef enum Direction{
 	UP = 0,
 	DOWN = 1,
@@ -38,6 +44,15 @@ typedef enum Direction{
 	RIGHT = 3
 }Direction;
 
+/* Game cursor position and level tracking */
+uint8_t cursor_pos[] = {CUR_ROW_INIT, CUR_COL_INIT};
+static uint8_t level = 1;
+
+/* Map of obstacles in game
+ * single matrix for each level
+ * 0 = no object
+ * 1 = object present
+ */
 static const bool object_map[2][429] =
 {
 	{	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -66,38 +81,48 @@ static const bool object_map[2][429] =
 };
 
 /* Private Functions */
-void ParseCommand(char* input);
+
+/* Handler for first level */
 static void handle_level_1(int argc, char* argv[]);
+/* Handler for second level */
 static void handle_level_2(int argc, char* argv[]);
+/* Handler for up movement command */
 static void handle_up(int argc, char* argv[]);
+/* Handler for down movement command */
 static void handle_down(int argc, char* argv[]);
+/* Handler for left movement command */
 static void handle_left(int argc, char* argv[]);
+/* Handler for right movement command */
 static void handle_right(int argc, char* argv[]);
+/* Handler for cursor position command */
 static void handle_cursor(int argc, char* argv[]);
+/* Handler for result print command */
 static void handle_result(int argc, char* argv[]);
+/* To detect if the cursor will bump into an object */
+static uint8_t bump_detect(Direction dir);
 
 
 /* Add commands here
- * Format : {"Command Name", &handler_fn, "Help string"}
+ * Format : {"Command Name", &handler_fn}
  * */
 static const command_table_t commands[] = \
 		{
 
-			{"Level_1", &handle_level_1, " ddd"},
+			{"Level_1", &handle_level_1},
 
-			{"Level_2", &handle_level_2, "aad"},
+			{"Level_2", &handle_level_2},
 
-			{"Up",	   	&handle_up, "dd"},
+			{"Up",	   	&handle_up},
 
-			{"Down",   	&handle_down, "ee"},
+			{"Down",   	&handle_down},
 
-			{"Left",	&handle_left, "dd"},
+			{"Left",	&handle_left},
 
-			{"Right",	&handle_right, "dd"},
+			{"Right",	&handle_right},
 
-			{"Cursor",  &handle_cursor, "dd"},
+			{"Cursor",  &handle_cursor},
 
-			{"Result",	&handle_result, "aa"}
+			{"Result",	&handle_result}
 
 		};
 
@@ -105,17 +130,6 @@ static const int num_commands =  sizeof(commands) / sizeof(command_table_t);
 
 /* Function Definitions */
 
-/**
- * @name    Parse_Command.
- *
- * @brief   Tokenizes the input string and calls the
- * 			correct handler for the command.
- *
- * @param	char* input - Accumulated buffer string.
- *
- * @return  void
- *
- */
 void ParseCommand(char* input)
 {
 	  char *p = input;
@@ -178,27 +192,37 @@ void ParseCommand(char* input)
 
 static uint8_t bump_detect(Direction dir)
 {
+	/* Checks the direction in which the cursor intends to move
+	 * and checks if an obstacle is present in that direction
+	 * Return 0 if obstacle is present to prevent collision.
+	 *
+	 * General calculation formula :
+	 * Check object map 2-D array for the current level and cursor position
+	 * Based on the direction intended, calculate the position of the
+	 * cursor mapped to the object map.
+	 */
+
 	if(dir == UP)
 	{
-		if(object_map[level-1][(cursor_pos[ROW] - 9)*39 + (cursor_pos[COL])])
+		if(object_map[level-1][(cursor_pos[ROW] - CUR_ROW_INIT - 1)*OBS_MAP_COL + (cursor_pos[COL])])
 			return 0;
 	}
 
 	else if(dir == DOWN)
 	{
-		if(object_map[level-1][(cursor_pos[ROW] - 7)*39 + (cursor_pos[COL])])
+		if(object_map[level-1][(cursor_pos[ROW] - CUR_ROW_INIT + 1)*OBS_MAP_COL + (cursor_pos[COL])])
 			return 0;
 	}
 
 	else if(dir == LEFT)
 	{
-		if(object_map[level-1][(cursor_pos[ROW] - 8)*39 + (cursor_pos[COL] - 1)])
+		if(object_map[level-1][(cursor_pos[ROW] - CUR_ROW_INIT)*OBS_MAP_COL + (cursor_pos[COL] - 1)])
 			return 0;
 	}
 
 	else if(dir == RIGHT)
 	{
-		if(object_map[level-1][(cursor_pos[ROW] - 8)*39 + (cursor_pos[COL] + 1)])
+		if(object_map[level-1][(cursor_pos[ROW] - CUR_ROW_INIT)*OBS_MAP_COL + (cursor_pos[COL] + 1)])
 			return 0;
 	}
 
@@ -220,17 +244,17 @@ static void handle_level_1(int argc, char* argv[])
 	printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\r");
 	printf("_______________________________________                                         \n\r");
 	printf("                                       |                                        \n\r");
-	printf("                  _       |       _____|     Welcome to Maze Terminal!          \n\r");
-	printf("  |____________    |      |      |     |     Use your NXP Dev Board as          \n\r");
-	printf("    |              |______|  __________|     a controller, USB facing           \n\r");
-	printf("____|  |  ______                       |     the user.                          \n\r");
+	printf("                  _       |       _____|    Welcome to Maze Terminal!           \n\r");
+	printf("  |____________    |      |      |     |    Use your NXP Dev Board as           \n\r");
+	printf("    |              |______|  __________|    a controller, USB facing            \n\r");
+	printf("____|  |  ______                       |    the user.                           \n\r");
 	printf("       |_|  |   |_________________|____|                                        \n\r");
-	printf("    |       |               |                Hold the board horizontally and    \n\r");
-	printf("    |_______|        ___    |          |     tap the touch sensor to start      \n\r");
+	printf("    |       |               |               Hold the board horizontally and     \n\r");
+	printf("    |_______|        ___    |          |    tap the touch sensor to start       \n\r");
 	printf("            |_____  |                  |                                        \n\r");
-	printf("  |_________|       |   |____________  |     Pitch up/down to move up/down      \n\r");
-	printf("               |    |                | |     Roll left/right to move left/right \n\r");
-	printf("_______________|____|________________|_|     To win -> Reach opening of maze    \n\r\e[8;1H\e[?25l");
+	printf("  |_________|       |   |____________  |    Pitch up/down to move up/down       \n\r");
+	printf("               |    |                | |    Roll left/right to move left/right  \n\r");
+	printf("_______________|____|________________|_|    To win -> Guide * to opening of maze\n\r\e[8;1H\e[?25l");
 }
 
 static void handle_level_2(int argc, char* argv[])
@@ -266,7 +290,7 @@ static void handle_level_2(int argc, char* argv[])
 static void handle_up(int argc, char* argv[])
 {
 	/* Check for boundary walls and obstacles */
-	if(cursor_pos[ROW] != 8 && bump_detect(UP))
+	if(cursor_pos[ROW] != CUR_MAX_UP && bump_detect(UP))
 	{
 		/* Erase old position, move up, write * */
 		printf("\b \b\e[A*");
@@ -279,7 +303,7 @@ static void handle_up(int argc, char* argv[])
 static void handle_down(int argc, char* argv[])
 {
 	/* Check for boundary walls and obstacles */
-	if(cursor_pos[ROW] != 18 && bump_detect(DOWN))
+	if(cursor_pos[ROW] != CUR_MAX_DOWN && bump_detect(DOWN))
 	{
 		/* Erase old position, move down, write * */
 		printf("\b \b\eD*");
@@ -292,7 +316,7 @@ static void handle_down(int argc, char* argv[])
 static void handle_left(int argc, char* argv[])
 {
 	/* Check for boundary walls and obstacles */
-	if(cursor_pos[COL] != 0 && bump_detect(LEFT))
+	if(cursor_pos[COL] != CUR_MAX_LEFT && bump_detect(LEFT))
 	{
 		/* Erase old position, move left, write * */
 		printf("\b \b\e6*");
@@ -305,7 +329,7 @@ static void handle_left(int argc, char* argv[])
 static void handle_right(int argc, char* argv[])
 {
 	/* Check for boundary walls and obstacles */
-	if(cursor_pos[COL] != 38 && bump_detect(RIGHT))
+	if(cursor_pos[COL] != CUR_MAX_RGHT && bump_detect(RIGHT))
 	{
 		/* Erase old position, move up, write * */
 		printf("\b \b\e9*");
@@ -315,8 +339,8 @@ static void handle_right(int argc, char* argv[])
 
 static void handle_cursor(int argc, char* argv[])
 {
-	/* Check for boundary walls and obstacles */
-	if((cursor_pos[ROW] == 14) && (cursor_pos[COL] == 38))
+	/* Check if the maze is completed */
+	if((cursor_pos[ROW] == CUR_ROW_WIN) && (cursor_pos[COL] == CUR_COL_WIN))
 		Set_Result();
 }
 
@@ -334,8 +358,9 @@ static void handle_result(int argc, char* argv[])
 		while(1);
 	}
 
-	cursor_pos[ROW] = 8;
-	cursor_pos[COL] = 0;
+	/* Reset cursor for next level */
+	cursor_pos[ROW] = CUR_ROW_INIT;
+	cursor_pos[COL] = CUR_COL_INIT;
 }
 
 

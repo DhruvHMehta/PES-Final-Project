@@ -33,7 +33,6 @@
  * If you cannot obtain a copy of the License, please contact the
  * author.
  */
-
 #include "System.h"
 #include "uCUnit-v1.0.h"
 #include "Testsuite.h"
